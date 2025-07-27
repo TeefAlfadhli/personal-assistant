@@ -1,0 +1,49 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment variables and secrets
+.env
+*.env
+
+# macOS and iCloud system files
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+ehthumbs.db
+Thumbs.db
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.ENV/
+
+# VS Code and other IDE/editor settings
+.vscode/
+.idea/
+*.swp
+
+# Log files and runtime files
+*.log
+*.pid
+
+# Flask/MCP specific
+instance/
+*.db
+*.sqlite3
+
+# Caches
+.cache/
+*.egg-info/
+pip-wheel-metadata/
+
+# Test coverage
+htmlcov/
+.coverage
+.tox/
+.nox/
+.pytest_cache/
