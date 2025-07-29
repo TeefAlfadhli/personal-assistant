@@ -1,0 +1,51 @@
+# Personal Assistant
+
+A Python-based personal assistant that uses MCP (Model Context Protocol) to provide intelligent tools and resources through a client-server architecture.
+
+## Overview
+
+This project implements a personal assistant system with an AI agent that can interact with various tools and resources through an MCP server. The architecture is designed to be modular, maintainable, and extensible.
+
+## Project Structure
+
+```
+personal-assistant/
+├── mcp_server.py      # MCP server implementation with tools/resources/prompts
+├── functionality.py   # Core logic and functions for tools (keeps server clean)
+├── connection.py      # Client-server connection handling
+└── agent.py          # AI agent behavior and client interaction logic
+```
+
+## Components
+
+### `mcp_server.py`
+Runs your MCP server and defines tools/resources/prompts. This is the main server component that handles requests and manages available tools.
+
+### `functionality.py`
+Contains the actual logic/functions your tools use. This module keeps the server code clean by separating business logic from server implementation.
+
+### `connection.py`
+Handles client-server connection logic. Manages the communication layer between the client and server components.
+
+### `agent.py`
+Implements your AI agent's behavior, using the client to interact with the server. This is where the intelligent decision-making and tool orchestration happens.
+
+## Getting Started
+
+[Add installation and setup instructions here]
+
+## Usage
+
+[Add usage examples and instructions here]
+
+## Features
+
+[Add list of features and capabilities here]
+
+## Contributing
+
+[Add contribution guidelines here]
+
+## License
+
+[Add license information here]

@@ -6,7 +6,7 @@ from agents import Agent, Runner
 
 load_dotenv()
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+openai.api_key = os.getenv("OPENAI_KEY")
 
 agent = Agent(
         name='PIPI',
