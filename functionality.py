@@ -9,29 +9,46 @@ mcp = FastMCP(
 
 # Define a tool that adds two integers and returns the result
 # TODO: Add PA tools
-@mcp.tool()
-def add(a: int, b: int) -> int:
-    """Return the sum of a and b."""
-    return a + b
-
-
-
 '''
 The date format must match what AppleScript expects (e.g., "Monday, June 10, 2024 at 10:00:00 AM").
 '''
 @mcp.tool()
-def add_calendar_event(date: str, description: str) -> str:
-    # AppleScript to add an event
-    applescript = f'''
+@mcp.tool()
+def create_event(title, date, start_time, duration_minutes):
+    # Combine and parse start datetime
+    start_datetime_str = f"{date} {start_time}"
+    start_dt = datetime.strptime(start_datetime_str, "%d/%m/%Y %I:%M %p")
+    end_dt = start_dt + timedelta(minutes=int(duration_minutes))
+
+    # Format dates for AppleScript
+    start_str = start_dt.strftime("%-d/%-m/%Y %I:%M %p")
+    end_str = end_dt.strftime("%-d/%-m/%Y %I:%M %p")
+
+    # AppleScript to add event
+    script = f'''
     tell application "Calendar"
-        tell calendar "Home"
-            make new event at end with properties {{summary:"{description}", start date:date "{date}"}}
+        activate
+        tell calendar "Calendar"
+            set startDate to date "{start_str}"
+            set endDate to date "{end_str}"
+            make new event at end with properties {{summary:"{title}", start date:startDate, end date:endDate}}
         end tell
     end tell
     '''
-    subprocess.run(['osascript', '-e', applescript])
-    return f"Event '{description}' scheduled for {date} in your Mac Calendar."
+    subprocess.run(["osascript", "-e", script])
 
+# 🌟 Get input from the user
+def prompt_user_for_event():
+    print("📅 Let's schedule a new event in your macOS Calendar.\n")
+    title = input("Event title: ")
+    date = input("Date (D/M/YYYY): ")
+    start_time = input("Start time (e.g., 10:00 AM): ")
+    duration = input("Duration (minutes): ")
+
+    create_event(title, date, start_time, duration)
+
+
+# add_event_to_calendar()
 
 
 # Define a resource that returns a static greeting string
