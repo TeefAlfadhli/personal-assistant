@@ -46,4 +46,4 @@ htmlcov/
 .coverage
 .tox/
 .nox/
-.pytest_cache/
+.pytest_cache/*.pyc
