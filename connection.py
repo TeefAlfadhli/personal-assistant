@@ -29,7 +29,7 @@ async def main():
                 print(f" - {p.name}: {p.description}")
 
             # More client-server interactions...
-            # TODO: Add client-server interactions
+            # TODO: Add client-server interactions - call_tool()
 
 if __name__ == "__main__":
     asyncio.run(main())
