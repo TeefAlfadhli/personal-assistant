@@ -1,7 +1,10 @@
 import subprocess
 from datetime import datetime, timedelta
-from os import name
+import os
+import requests
+from dotenv import load_dotenv
 
+load_dotenv()
 
 
 # 📅 Add an event to the macOS Calendar
@@ -91,7 +94,6 @@ def create_note(title: str = None, body: str = None):
     print(f"✅ Note created in macOS Notes under 'Notes': {title}")
 
 # 📝 Create a note with parameters (for agent use)
-import subprocess
 
 def create_note(title: str = None, body: str = None):
     """
@@ -141,9 +143,111 @@ def create_note(title: str = None, body: str = None):
     subprocess.run(["osascript", "-e", script])
     print(f"✅ Note created in macOS Notes under 'Notes': {title}")
 
-# 💬 Define a prompt template that generates a user message about a topic
-def ask_user_task(name: str) -> str:
-    """Generate a user message asking for an explanation of topic."""
-    return f"Hello '{name}', How can I help you today?"
 
-# TODO: connect to a client (e.g. a calendar app)
+
+
+
+
+BANNED_FILES = [".env", ".secrets", ".DS_Store"]
+
+def run_cmd(cmd, cwd):
+    result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True)
+    return result.stdout.strip(), result.returncode
+
+def remove_sensitive_files(local_path):
+    for filename in BANNED_FILES:
+        full_path = os.path.join(local_path, filename)
+        if os.path.isfile(full_path):
+            tracked, _ = run_cmd(["git", "ls-files", filename], cwd=local_path)
+            if tracked:
+                run_cmd(["git", "rm", "--cached", filename], cwd=local_path)
+
+def ensure_gitignore(local_path):
+    gitignore_path = os.path.join(local_path, ".gitignore")
+    required_rules = [".env", "__pycache__/", "*.pyc"]
+
+    if not os.path.exists(gitignore_path):
+        with open(gitignore_path, "w") as f:
+            for rule in required_rules:
+                f.write(rule + "\n")
+    else:
+        with open(gitignore_path, "r+") as f:
+            lines = f.read().splitlines()
+            for rule in required_rules:
+                if rule not in lines:
+                    f.write(rule + "\n")
+
+def upload_to_github():
+    local_path = os.getcwd()
+    repo_name = os.path.basename(local_path)
+    description = "Synced by MCP GitHub uploader"
+    private = True
+
+    github_token = os.getenv("GITHUB_TOKEN")
+    github_user = os.getenv("GITHUB_USERNAME")
+
+    if not github_token or not github_user:
+        return "❌ Missing GitHub credentials or username in .env."
+
+    if not os.path.exists(local_path):
+        return f"❌ Path does not exist: {local_path}"
+
+    headers = {
+        "Authorization": f"token {github_token}",
+        "Accept": "application/vnd.github.v3+json"
+    }
+
+    check_url = f"https://api.github.com/repos/{github_user}/{repo_name}"
+    check_response = requests.get(check_url, headers=headers)
+    repo_exists = check_response.status_code == 200
+
+    if not repo_exists:
+        data = {
+            "name": repo_name,
+            "description": description,
+            "private": private
+        }
+        create_response = requests.post("https://api.github.com/user/repos", headers=headers, json=data)
+        if create_response.status_code != 201:
+            return f"❌ Failed to create GitHub repo: {create_response.json().get('message')}"
+        clone_url = create_response.json()["clone_url"]
+    else:
+        clone_url = f"https://github.com/{github_user}/{repo_name}.git"
+
+    ensure_gitignore(local_path)
+    remove_sensitive_files(local_path)
+
+    if not any(os.scandir(local_path)):
+        with open(os.path.join(local_path, "README.md"), "w") as f:
+            f.write("# Auto-generated README\n")
+
+    is_git_repo = os.path.isdir(os.path.join(local_path, ".git"))
+    if not is_git_repo:
+        run_cmd(["git", "init"], local_path)
+
+    run_cmd(["git", "checkout", "-B", "main"], local_path)
+
+    # Fix remote URL if needed
+    expected_repo_url = f"https://github.com/{github_user}/{repo_name}.git"
+    remotes_output, _ = run_cmd(["git", "remote", "-v"], local_path)
+    origin_url = ""
+    for line in remotes_output.splitlines():
+        if line.startswith("origin") and "(push)" in line:
+            origin_url = line.split()[1]
+            break
+
+    if origin_url != expected_repo_url:
+        if origin_url:
+            run_cmd(["git", "remote", "set-url", "origin", expected_repo_url], local_path)
+        else:
+            run_cmd(["git", "remote", "add", "origin", expected_repo_url], local_path)
+
+    run_cmd(["git", "add", "."], local_path)
+    _, code = run_cmd(["git", "commit", "-m", "Update project"], local_path)
+    if code != 0:
+        return "ℹ️ Nothing new to commit."
+
+    run_cmd(["git", "branch", "-M", "main"], local_path)
+    push_output, _ = run_cmd(["git", "push", "--force", "-u", "origin", "main"], local_path)
+
+    return f"✅ Synced with GitHub: https://github.com/{github_user}/{repo_name}"
